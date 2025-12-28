@@ -1,4 +1,13 @@
 from flask import Flask, render_template, request
+from dotenv import load_dotenv
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+import os
+from urllib.parse import urlparse, parse_qs, quote_plus
+
+load_dotenv()
+user = os.getenv("MONGO_USERNAME") #en el archivo .env poned vuestros datos de usuario
+pw = os.getenv("PASSWORD")
 
 app = Flask(__name__)
 
@@ -6,14 +15,37 @@ def get_db():
     """
     Crear y comprobar la conexión a MongoDB y devolver la base de datos que se va a usar
     """
-    return None
+    username = quote_plus(user)
+    password = quote_plus(pw)
+
+    uri = f"mongodb+srv://{username}:{password}@cluster0.naqjxci.mongodb.net/?appName=Cluster0"
+    
+    client = MongoClient(uri, server_api=ServerApi('1'))
+
+    try:
+
+        client.admin.command('ping')
+
+        print("Conexión con MongoDB exitosa")
+
+        return client['Flask_ONNX']
+    
+    except Exception as e:
+
+        print(f"Error conectando a MongoDB: {e}")
+
+        raise
+
+db = None
 
 @app.before_request
 def connect_db():
     """
     Asegura que exista una conexión antes de cada request
     """
-    return None
+    global db
+    if db is None:
+        db = get_db()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -21,7 +53,7 @@ def home():
     Página principal
     Esencial: botones para dirigir al usuario a las otras rutas (abajo)
     """
-    return None
+    return "TODO OK"
 
 @app.route('/history', methods=['GET'])
 def history():
@@ -65,3 +97,6 @@ def minigame():
     Minijuego, el usuario tiene que adivinar si un mensaje o screenshot de una página es una scam o no
     """
     return None
+
+if __name__ == "__main__":
+    app.run(debug = True, host = "localhost", port  = 5000)

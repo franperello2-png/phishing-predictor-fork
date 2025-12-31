@@ -82,7 +82,33 @@ def advising():
     Contiene las FAQ en relación al phishing, también contiene links (o vídeos insertados) explicando dudas y
     definiciones simples para ayudar a la persona a detectar posibles scams
     """
-    return None
+    faqs = [
+        {
+            "question": "¿Qué es el phishing?",
+            "answer": "El phishing es un intento de engaño para robar información personal haciéndose pasar por una entidad legítima."
+        },
+        {
+            "question": "¿Cómo identificar un correo phishing?",
+            "answer": "Revisa el remitente, enlaces sospechosos, errores ortográficos y mensajes de urgencia."
+        },
+        {
+            "question": "¿Qué hago si he caído en un phishing?",
+            "answer": "Cambia tus contraseñas inmediatamente y contacta con tu banco o proveedor."
+        }
+    ]
+
+    videos = [
+        {
+            "title": "¿Qué es el phishing?",
+            "youtube_id": "XBkzBrXlle0"
+        },
+        {
+            "title": "Cómo evitar ataques de phishing",
+            "youtube_id": "kL1zYx6RrKo"
+        }
+    ]
+
+    return render_template("advising.html", faqs=faqs, videos=videos)
 
 @app.route('/predictions', methods=['GET', 'POST'])
 def predictions():

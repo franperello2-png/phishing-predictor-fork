@@ -3,250 +3,653 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PhishingPredictor | Advising</title>
+<title>PhishingPredictor | Centro de Ayuda</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #f9f9f9;
     color: #333;
+    overflow-x: hidden;
 }
 
-/* HERO */
-.hero-advising {
-    padding: 4rem 2rem;
+/* ===== BACKGROUND ===== */
+canvas#bgCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* ===== HEADER ===== */
+header {
+    position: relative;
+    z-index: 2;
+    padding: 2rem 4rem;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 2.4rem;
+    color: #1e3c72;
+}
+
+/* ===== BACK HOME BUTTON ===== */
+.back-home {
+    text-decoration: none;
+    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    background: rgba(30,144,255,0.1);
+    color: #1e3c72;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.back-home i {
+    margin-right: 0.4rem;
+}
+
+.back-home:hover {
+    background: #1e90ff;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* ===== INTRO ===== */
+.intro {
+    position: relative;
+    z-index: 2;
+    max-width: 1100px;
+    margin: 4rem auto;
+    padding: 0 3rem;
     text-align: center;
-    background: linear-gradient(135deg, #1e90ff, #1e3c72);
-    color: white;
 }
 
-.hero-advising h1 {
+.intro h2 {
     font-size: 2.6rem;
+    color: #1e90ff;
     margin-bottom: 1rem;
 }
 
-.hero-advising p {
-    font-size: 1.2rem;
-    opacity: 0.95;
-}
-
-/* SECCIONES */
-.section {
-    max-width: 1100px;
-    margin: 4rem auto;
-    padding: 0 2rem;
-}
-
-.section h2 {
-    font-size: 2rem;
-    color: #1e3c72;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-/* FAQ */
-.accordion {
-    max-width: 900px;
+.intro p {
+    font-size: 1.1rem;
+    color: #555;
+    max-width: 780px;
     margin: auto;
 }
 
-.accordion-item {
-    background-color: white;
-    margin-bottom: 1rem;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+/* ===== NAV ===== */
+.nav-sections {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+    position: relative;
+    z-index: 2;
 }
 
-.accordion-item button {
-    width: 100%;
-    padding: 1.2rem 1.5rem;
-    background-color: #1e90ff;
-    color: white;
-    border: none;
-    text-align: left;
-    font-size: 1.05rem;
+.nav-sections a {
+    padding: 0.8rem 1.8rem;
+    background: rgba(255,255,255,0.95);
+    border-radius: 50px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #1e3c72;
     font-weight: 500;
-    cursor: pointer;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
 }
 
-.accordion-item button:hover {
-    background-color: #00bfff;
+.nav-sections a:hover {
+    background: #1e90ff;
+    color: #fff;
+    transform: translateY(-3px);
 }
 
-.accordion-content {
-    display: none;
-    padding: 1.2rem 1.5rem;
-    background-color: #f0f8ff;
-    font-size: 0.95rem;
-    line-height: 1.6;
+/* ===== SECTIONS ===== */
+.section {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto 5rem;
+    padding: 0 3rem;
 }
 
-/* VIDEOS */
-.video-grid {
+.section h3 {
+    font-size: 2rem;
+    color: #1e3c72;
+    margin-bottom: 2rem;
+}
+
+/* ===== FAQ ===== */
+.faq-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
 }
 
-.video-card {
-    background-color: white;
-    border-radius: 18px;
-    padding: 1.5rem;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-    transition: transform 0.3s ease;
+.faq-card {
+    background: rgba(255,255,255,0.96);
+    padding: 2.2rem;
+    border-radius: 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
 }
 
-.video-card:hover {
-    transform: translateY(-6px);
+.faq-card h4 {
+    color: #1e90ff;
+    margin-bottom: 0.6rem;
 }
 
-.video-card h3 {
-    margin-bottom: 1rem;
-    color: #1e3c72;
-    font-size: 1.1rem;
+.faq-card a {
+    display: inline-block;
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    color: #1e90ff;
+    text-decoration: none;
 }
 
-.video-card iframe {
+.faq-card a:hover {
+    text-decoration: underline;
+}
+
+/* ===== VIDEOS ===== */
+.video-scroll {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    padding-bottom: 1.5rem;
+}
+
+.video-scroll::-webkit-scrollbar { display: none; }
+.video-scroll { scrollbar-width: none; }
+
+.video-item {
+    flex: 0 0 360px;
+}
+
+@media (min-width: 1200px) {
+    .video-item { flex: 1; }
+}
+
+.video-item iframe {
     width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    border: none;
+    height: 220px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
-/* CONSEJOS */
+/* ===== TIPS ===== */
 .tips-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 2rem;
 }
 
-.tip-card {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 18px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-    text-align: center;
+.tip {
+    background: rgba(255,255,255,0.96);
+    padding: 2.4rem;
+    border-radius: 26px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.12);
+    display: flex;
+    gap: 1.4rem;
 }
 
-.tip-card h4 {
+.tip-icon {
+    min-width: 56px;
+    height: 56px;
+    background: rgba(30,144,255,0.15);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tip-icon i {
+    font-size: 1.6rem;
+    color: #1e90ff;
+}
+
+.tip-text h4 {
+    margin-bottom: 0.4rem;
     color: #1e3c72;
-    margin-bottom: 0.8rem;
 }
 
-.tip-card p {
+.tip-text p {
     font-size: 0.95rem;
     color: #555;
 }
 
-/* FOOTER */
+/* ===== FOOTER ===== */
 footer {
-    margin-top: 4rem;
-    padding: 1.5rem;
-    background-color: white;
+    position: relative;
+    z-index: 2;
     text-align: center;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
-}
-
-footer a {
-    color: #1e90ff;
-    text-decoration: none;
-    margin: 0 0.5rem;
+    padding: 2rem;
+    background: rgba(255,255,255,0.9);
 }
 </style>
 </head>
+
 <body>
 
-<!-- HERO -->
-<section class="hero-advising">
-    <h1>Asesoramiento Anti-Phishing</h1>
-    <p>Aprende a detectar, evitar y actuar ante ataques de phishing</p>
+<canvas id="bgCanvas"></canvas>
+
+<header>
+    <h1>PhishingPredictor</h1>
+    <a href="/" class="back-home">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+    </a>
+</header>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishingPredictor | Centro de Ayuda</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* ===== BACKGROUND ===== */
+canvas#bgCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* ===== HEADER ===== */
+header {
+    position: relative;
+    z-index: 2;
+    padding: 2rem 4rem;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+header h1 {
+    font-size: 2.4rem;
+    color: #1e3c72;
+}
+
+/* ===== INTRO ===== */
+.intro {
+    position: relative;
+    z-index: 2;
+    max-width: 1100px;
+    margin: 4rem auto;
+    padding: 0 3rem;
+    text-align: center;
+}
+
+.intro h2 {
+    font-size: 2.6rem;
+    color: #1e90ff;
+    margin-bottom: 1rem;
+}
+
+.intro p {
+    font-size: 1.1rem;
+    color: #555;
+    max-width: 780px;
+    margin: auto;
+}
+
+/* ===== NAV ===== */
+.nav-sections {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.nav-sections a {
+    padding: 0.8rem 1.8rem;
+    background: rgba(255,255,255,0.95);
+    border-radius: 50px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #1e3c72;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-sections a:hover {
+    background: #1e90ff;
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+/* ===== SECTIONS ===== */
+.section {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto 5rem;
+    padding: 0 3rem;
+}
+
+.section h3 {
+    font-size: 2rem;
+    color: #1e3c72;
+    margin-bottom: 2rem;
+}
+
+/* ===== FAQ ===== */
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.faq-card {
+    background: rgba(255,255,255,0.96);
+    padding: 2.2rem;
+    border-radius: 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.faq-card h4 {
+    color: #1e90ff;
+    margin-bottom: 0.6rem;
+}
+
+.faq-card a {
+    display: inline-block;
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    color: #1e90ff;
+    text-decoration: none;
+}
+
+.faq-card a:hover {
+    text-decoration: underline;
+}
+
+/* ===== VIDEOS ===== */
+.video-scroll {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    padding-bottom: 1.5rem;
+}
+
+.video-scroll::-webkit-scrollbar { display: none; }
+.video-scroll { scrollbar-width: none; }
+
+.video-item {
+    flex: 0 0 360px;
+}
+
+@media (min-width: 1200px) {
+    .video-item {
+        flex: 1;
+    }
+}
+
+.video-item iframe {
+    width: 100%;
+    height: 220px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* ===== TIPS ===== */
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+}
+
+.tip {
+    background: rgba(255,255,255,0.96);
+    padding: 2.4rem;
+    border-radius: 26px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.12);
+    display: flex;
+    gap: 1.4rem;
+    align-items: flex-start;
+}
+
+.tip-icon {
+    min-width: 56px;
+    height: 56px;
+    background: rgba(30,144,255,0.15);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tip-icon i {
+    font-size: 1.6rem;
+    color: #1e90ff;
+}
+
+.tip-text h4 {
+    margin-bottom: 0.4rem;
+    color: #1e3c72;
+}
+
+.tip-text p {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255,255,255,0.9);
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<section class="intro">
+    <h2>Centro de ayuda anti-phishing</h2>
+    <p>Conoce cómo funcionan los ataques de phishing, aprende a identificarlos y protege tu información digital con buenas prácticas.</p>
 </section>
 
-<!-- FAQ -->
-<section class="section">
-    <h2>Preguntas frecuentes</h2>
+<nav class="nav-sections">
+    <a href="#faq">FAQ</a>
+    <a href="#learn">Aprende</a>
+    <a href="#tips">Consejos</a>
+</nav>
 
-    <div class="accordion">
-        {% for faq in faqs %}
-        <div class="accordion-item">
-            <button>{{ faq.question }}</button>
-            <div class="accordion-content">
-                <p>{{ faq.answer }}</p>
+<section id="faq" class="section">
+    <h3>Preguntas frecuentes</h3>
+    <div class="faq-grid">
+
+        <div class="faq-card">
+            <h4>¿Qué es exactamente el phishing?</h4>
+            <p>Es un ataque que suplanta a entidades legítimas para obtener credenciales, datos bancarios o información personal.</p>
+            <a href="https://www.incibe.es/ciudadania/que-es-phishing" target="_blank">Leer más en INCIBE →</a>
+        </div>
+
+        <div class="faq-card">
+            <h4>¿Cómo puedo detectar un correo fraudulento?</h4>
+            <p>Analiza el remitente, errores gramaticales, enlaces sospechosos y mensajes de urgencia.</p>
+            <a href="https://www.kaspersky.es/resource-center/definitions/phishing" target="_blank">Guía detallada →</a>
+        </div>
+
+        <div class="faq-card">
+            <h4>¿Qué debo hacer si he caído en phishing?</h4>
+            <p>Cambia contraseñas, revisa accesos, activa 2FA y reporta el incidente.</p>
+            <a href="https://www.osi.es/es/actualidad/blog/2022/07/21/has-sido-victima-de-phishing" target="_blank">Pasos recomendados →</a>
+        </div>
+
+        <div class="faq-card">
+            <h4>¿El phishing solo ocurre por email?</h4>
+            <p>No. También existe phishing por SMS, llamadas telefónicas y redes sociales.</p>
+            <a href="https://www.cloudflare.com/es-es/learning/security/threats/phishing/" target="_blank">Tipos de phishing →</a>
+        </div>
+
+        <div class="faq-card">
+            <h4>¿Puede afectar el phishing a empresas?</h4>
+            <p>Sí, es una de las principales causas de brechas de seguridad corporativas.</p>
+            <a href="https://www.ibm.com/topics/phishing" target="_blank">Impacto en empresas →</a>
+        </div>
+
+        <div class="faq-card">
+            <h4>¿Es lo mismo phishing que malware?</h4>
+            <p>No. El phishing engaña al usuario; el malware infecta el sistema.</p>
+            <a href="https://www.avast.com/es-es/c-phishing-vs-malware" target="_blank">Diferencias →</a>
+        </div>
+
+    </div>
+</section>
+
+<section id="learn" class="section">
+    <h3>Aprende con vídeos</h3>
+    <div class="video-scroll">
+        <div class="video-item">
+            <iframe src="https://www.youtube.com/embed/Z34PbwQtGqk"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowfullscreen></iframe>
+        </div>
+        <div class="video-item">
+            <iframe src="https://www.youtube.com/embed/Y7zNlEMDmI4"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowfullscreen></iframe>
+        </div>
+        <div class="video-item">
+            <iframe src="https://www.youtube.com/embed/UuuAlP7ay6U"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowfullscreen></iframe>
+        </div>
+    </div>
+</section>
+
+<section id="tips" class="section">
+    <h3>Consejos clave</h3>
+    <div class="tips-grid">
+
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="tip-text">
+                <h4>Desconfía por defecto</h4>
+                <p>Asume que cualquier mensaje puede ser malicioso hasta verificarlo.</p>
             </div>
         </div>
-        {% endfor %}
-    </div>
-</section>
 
-<!-- VIDEOS -->
-<section class="section">
-    <h2>Aprende con vídeos</h2>
-
-    <div class="video-grid">
-        {% for video in videos %}
-        <div class="video-card">
-            <h3>{{ video.title }}</h3>
-            <iframe 
-                src="https://www.youtube.com/embed/{{ video.youtube_id }}"
-                allowfullscreen>
-            </iframe>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-
-<!-- CONSEJOS -->
-<section class="section">
-    <h2>Consejos rápidos de seguridad</h2>
-
-    <div class="tips-grid">
-        <div class="tip-card">
-            <h4>No hagas clic en enlaces sospechosos</h4>
-            <p>Verifica siempre la URL antes de introducir tus datos.</p>
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-link-slash"></i></div>
+            <div class="tip-text">
+                <h4>No pulses enlaces</h4>
+                <p>Accede manualmente a las webs escribiendo la URL.</p>
+            </div>
         </div>
 
-        <div class="tip-card">
-            <h4>Desconfía de mensajes urgentes</h4>
-            <p>El phishing suele presionar para que actúes rápido.</p>
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-envelope-open-text"></i></div>
+            <div class="tip-text">
+                <h4>Verifica el remitente</h4>
+                <p>Comprueba dominios y direcciones completas.</p>
+            </div>
         </div>
 
-        <div class="tip-card">
-            <h4>Activa la autenticación en dos pasos</h4>
-            <p>Añade una capa extra de seguridad a tus cuentas.</p>
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="tip-text">
+                <h4>No compartas credenciales</h4>
+                <p>Ninguna empresa legítima te las pedirá.</p>
+            </div>
         </div>
 
-        <div class="tip-card">
-            <h4>Revisa el remitente</h4>
-            <p>Pequeños errores en el correo suelen indicar fraude.</p>
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-lock"></i></div>
+            <div class="tip-text">
+                <h4>Activa doble factor</h4>
+                <p>Reduce drásticamente el impacto de un ataque.</p>
+            </div>
         </div>
+
+        <div class="tip">
+            <div class="tip-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="tip-text">
+                <h4>No actúes con prisas</h4>
+                <p>La urgencia es una de las técnicas más usadas en phishing.</p>
+            </div>
+        </div>
+
     </div>
 </section>
 
 <footer>
-    <p>&copy; 2025 PhishingPredictor | 
-        <a href="/">Inicio</a> | 
-        <a href="/advising">Advising</a>
-    </p>
+    <p>&copy; 2025 PhishingPredictor</p>
 </footer>
 
 <script>
-document.querySelectorAll(".accordion-item button").forEach(button => {
-    button.addEventListener("click", () => {
-        const content = button.nextElementSibling;
-        content.style.display = content.style.display === "block" ? "none" : "block";
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const particles = Array.from({ length: 70 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 4 + 3,
+    vx: (Math.random() - 0.5) * 0.6,
+    vy: (Math.random() - 0.5) * 0.6
+}));
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(30,144,255,0.22)";
+        ctx.fill();
     });
-});
+    requestAnimationFrame(animate);
+}
+animate();
 </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -100,15 +100,16 @@ def advising():
     videos = [
         {
             "title": "¿Qué es el phishing?",
-            "youtube_id": "XBkzBrXlle0"
+            "youtube_id": "Z34PbwQtGqk"
         },
         {
             "title": "Cómo evitar ataques de phishing",
-            "youtube_id": "kL1zYx6RrKo"
+            "youtube_id": "WsbbAxfQN2M"
         }
     ]
 
     return render_template("advising.html", faqs=faqs, videos=videos)
+
 
 @app.route('/predictions', methods=['GET', 'POST'])
 def predictions():

@@ -1,3 +1,3 @@
 .env
 secretos.txt
-train_onnx
+train_onnx.py

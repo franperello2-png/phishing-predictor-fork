@@ -119,7 +119,6 @@ def minigame():
     result = None
 
     if request.method == "POST":
-        # 🔹 USAR LA MISMA IMAGEN
         image_id = request.form.get("image_id")
         image = db["minigame"].find_one({"_id": ObjectId(image_id)})
 
@@ -132,7 +131,6 @@ def minigame():
         }
 
     else:
-        # 🔹 SOLO EN GET elegimos nueva imagen
         image = random.choice(images)
         image_id = str(image["_id"])
 

@@ -221,7 +221,6 @@ def report():
     collection_links = db["report_reliable_links"]
     collection_antivirus = db["best antivirus"]
     report_links = collection_links.find_one({}, {"_id": 0})
-
     antivirus_list = list(collection_antivirus.find({}, {"_id": 0}))
 
     if request.method == "POST":

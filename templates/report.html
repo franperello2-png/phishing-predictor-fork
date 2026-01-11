@@ -4,70 +4,156 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PhishingPredictor | Reportar Phishing</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-body { font-family: 'Roboto', sans-serif; background: #f9f9f9; color: #333; margin:0; padding:0; }
-.container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-h1,h2,h3 { color: #1e3c72; }
-.section { background: #fff; padding: 2rem; margin-bottom: 2rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-.link-list a { display: block; margin-bottom: 0.8rem; color: #1e90ff; text-decoration: none; font-weight: 500; }
-.link-list a:hover { text-decoration: underline; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Roboto', sans-serif; background-color: #f9f9f9; color: #333; overflow-x: hidden; }
+canvas#bgCanvas { position: fixed; inset: 0; z-index: 0; }
+
+/* HEADER */
+header { position: relative; z-index: 2; padding: 2rem 4rem; background: rgba(255,255,255,0.95); box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 2.4rem; font-weight: 700; color: #1e3c72; }
+.home-btn { text-decoration: none; background: linear-gradient(135deg, #1e90ff, #00bfff); color: #fff; padding: 0.75rem 1.9rem; border-radius: 50px; font-weight: 500; font-size: 1rem; display: flex; align-items: center; gap: 0.6rem; transition: all 0.3s ease; }
+.home-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(30,144,255,0.35); }
+
+/* INTRO */
+.intro { position: relative; z-index: 2; max-width: 1100px; margin: 4rem auto; padding: 0 3rem; text-align: center; }
+.intro h2 { font-size: 2.6rem; color: #1e90ff; margin-bottom: 1rem; }
+.intro p { font-size: 1.1rem; color: #555; max-width: 780px; margin: auto; }
+
+/* NAV */
+.nav-sections { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 5rem; position: relative; z-index: 2; }
+.nav-sections a { padding: 0.8rem 1.8rem; background: rgba(255,255,255,0.95); border-radius: 50px; box-shadow: 0 6px 18px rgba(0,0,0,0.1); text-decoration: none; color: #1e3c72; font-weight: 500; transition: all 0.3s ease; }
+.nav-sections a:hover { background: #1e90ff; color: #fff; transform: translateY(-3px); }
+
+/* SECTION */
+.section { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto 5rem; padding: 0 3rem; }
+.section h3 { font-size: 2rem; color: #1e3c72; margin-bottom: 2rem; }
+
+/* GRID DE TARJETAS */
+.faq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; }
+.faq-card { background: rgba(255,255,255,0.96); padding: 2.2rem; border-radius: 22px; box-shadow: 0 12px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.faq-card:hover { transform: translateY(-4px); box-shadow: 0 18px 35px rgba(0,0,0,0.15); }
+.faq-card h4 { color: #1e90ff; margin-bottom: 0.6rem; font-size: 1.2rem; }
+.faq-card p { color: #555; font-size: 1rem; margin-bottom: 0.6rem; }
+.faq-card a { font-size: 0.95rem; color: #1e90ff; text-decoration: none; }
+.faq-card a:hover { text-decoration: underline; }
+
+/* FORM */
 form select, form input[type="text"], form input[type="submit"] { padding:0.6rem; margin-right:0.5rem; border-radius:8px; border:1px solid #ccc; }
 form input[type="submit"] { background: #1e90ff; color:#fff; border:none; cursor:pointer; }
 form input[type="submit"]:hover { background: #007acc; }
-.antivirus-item { margin-bottom: 1rem; }
-.antivirus-item a { font-weight: 500; color: #1e90ff; text-decoration:none; }
-.antivirus-item a:hover { text-decoration: underline; }
+
+/* ANTIVIRUS / LINKS */
+.link-list a { display: block; margin-bottom: 0.8rem; color: #1e90ff; text-decoration: none; font-weight: 500; }
+.link-list a:hover { text-decoration: underline; }
+
+/* FOOTER */
+footer { position: relative; z-index: 2; text-align: center; padding: 2rem; background: rgba(255,255,255,0.9); font-size: 0.95rem; color: #555; }
 </style>
 </head>
+
 <body>
+<canvas id="bgCanvas"></canvas>
 
-<div class="container">
+<header>
+    <h1>PhishingPredictor</h1>
+    <a href="/" class="home-btn"><i class="fas fa-home"></i> Volver al Inicio</a>
+</header>
 
-<h1>Reportar Phishing</h1>
+<section class="intro">
+    <h2>Reportar Phishing</h2>
+    <p>Encuentra enlaces oficiales y seguros para reportar correos, SMS o sitios web sospechosos según tu país.</p>
+</section>
 
-<!-- ===== LINKS OFICIALES ===== -->
-<div class="section">
-    <h2>Enlaces oficiales para reportar phishing</h2>
-    <div class="link-list">
-        {% for tipo, links in report_links.items() %}
-            <h3>{{ tipo }}</h3>
-            {% for nombre, url in links.items() %}
-                <a href="{{ url }}" target="_blank"><i class="fas fa-link"></i> {{ nombre }}</a>
+<nav class="nav-sections">
+    <a href="#url">URL</a>
+    <a href="#email">Email</a>
+    <a href="#sms">SMS</a>
+</nav>
+
+<section id="url" class="section">
+    <h3>Enlaces para reportar URL</h3>
+    <div class="faq-grid">
+        {% for pais, urls in report_links["URL"].items() %}
+            {% for link in urls %}
+            <div class="faq-card">
+                <h4>{{ link.nombre }} ({{ pais }})</h4>
+                <p>Tipo: {{ link.tipo }}</p>
+                <a href="{{ link.link }}" target="_blank"><i class="fas fa-link"></i> Ir al enlace</a>
+            </div>
             {% endfor %}
         {% endfor %}
     </div>
-</div>
+</section>
 
-<!-- ===== FORMULARIO OPCIONAL ===== -->
-<div class="section">
-    <h2>Encuentra el mejor link para reportar</h2>
-    <form method="POST">
-        <select name="tipo">
-            <option value="URL">URL sospechosa</option>
-            <option value="Email">Email sospechoso</option>
-            <option value="SMS">SMS sospechoso</option>
-        </select>
-        <input type="text" name="pais" placeholder="País (opcional)">
-        <input type="submit" value="Buscar">
-    </form>
+<section id="email" class="section">
+    <h3>Enlaces para reportar Emails</h3>
+    <div class="faq-grid">
+        {% for pais, emails in report_links["Email"].items() %}
+            {% for link in emails %}
+            <div class="faq-card">
+                <h4>{{ link.nombre }} ({{ pais }})</h4>
+                <p>Tipo: {{ link.tipo }}</p>
+                <a href="{{ link.link }}" target="_blank"><i class="fas fa-envelope"></i> Ir al enlace</a>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</section>
 
-    {% if link_encontrado %}
-        <p>El link recomendado para reportar: <a href="{{ link_encontrado }}" target="_blank">{{ link_encontrado }}</a></p>
-    {% endif %}
-</div>
+<section id="sms" class="section">
+    <h3>Enlaces para reportar SMS</h3>
+    <div class="faq-grid">
+        {% for pais, smslist in report_links["SMS"].items() %}
+            {% for link in smslist %}
+            <div class="faq-card">
+                <h4>{{ link.nombre }} ({{ pais }})</h4>
+                <p>Tipo: {{ link.tipo }}</p>
+                <a href="{{ link.link }}" target="_blank"><i class="fas fa-comment-dots"></i> Ir al enlace / número</a>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</section>
 
-<!-- ===== MEJORES ANTIVIRUS ===== -->
-<div class="section">
-    <h2>Mejores software antivirus</h2>
-    {% for av in antivirus_list %}
-        <div class="antivirus-item">
-            <a href="{{ av.url }}" target="_blank">{{ av.nombre }}</a> - {{ av.descripcion }}
-        </div>
-    {% endfor %}
-</div>
+<footer>
+    <p>&copy; 2025 PhishingPredictor</p>
+</footer>
 
-</div>
+<script>
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+const particles = Array.from({ length: 70 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 4 + 3,
+    vx: (Math.random() - 0.5) * 0.6,
+    vy: (Math.random() - 0.5) * 0.6
+}));
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(30,144,255,0.22)";
+        ctx.fill();
+    });
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+
 </body>
 </html>
+

@@ -89,7 +89,7 @@ header h1 {
     text-align: center;
 }
 
-/* ===== CABECERA DE CADA ANALISIS ===== */
+/* ===== CABECERA ===== */
 .analysis-header h2 {
     font-size: 1.9rem;
     color: #1e3c72;
@@ -137,7 +137,6 @@ header h1 {
     text-align: left;
     font-size: 1rem;
     line-height: 1.5;
-    word-wrap: break-word;
 }
 
 .result .key {
@@ -160,6 +159,30 @@ header h1 {
     background-color: #e6fff2;
 }
 
+/* ===== EXPLICACION COHERE ===== */
+.explanation-box {
+    margin-top: 1.2rem;
+    padding: 1.2rem 1.4rem;
+    background: #f7f9fc;
+    border-radius: 14px;
+    border-left: 4px solid #1e90ff;
+}
+
+.explanation-box h4 {
+    font-size: 1.1rem;
+    color: #1e3c72;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.explanation-box p {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.55;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1000px) {
     .main-content { flex-direction: column; align-items: center; gap: 2rem; }
@@ -167,6 +190,7 @@ header h1 {
 }
 </style>
 </head>
+
 <body>
 
 <canvas id="bgCanvas"></canvas>
@@ -178,59 +202,77 @@ header h1 {
 
 <div class="main-content">
 
-    <!-- ===== ANALISIS POR URL ===== -->
-    <div class="analysis-box">
-        <div class="analysis-header">
-            <h2>Analizar por URL</h2>
-            <p>Introduce la URL de la imagen para predecir phishing.</p>
-        </div>
-        <form method="POST" action="/analizar_img" enctype="multipart/form-data">
-            <input type="text" name="img_url" placeholder="https://ejemplo.com/imagen.png">
-            <br>
-            <input type="submit" value="Analizar">
-        </form>
-
-        {% if resultado_url %}
-            {% if resultado_url.error %}
-                <div class="result nophishing">{{ resultado_url.error }}</div>
-            {% else %}
-                <div class="result {% if resultado_url.es_phishing %}phishing{% else %}nophishing{% endif %}">
-                    <div><span class="key">Es mensaje:</span><span class="value">{{ resultado_url.es_mensaje }}</span></div>
-                    {% if resultado_url.es_mensaje %}
-                        <div><span class="key">Es phishing:</span><span class="value">{{ resultado_url.es_phishing }}</span></div>
-                        <div><span class="key">Probabilidad:</span><span class="value">{{ resultado_url.probabilidad_phishing }}%</span></div>
-                    {% endif %}
-                </div>
-            {% endif %}
-        {% endif %}
+<!-- ===== ANALISIS POR URL ===== -->
+<div class="analysis-box">
+    <div class="analysis-header">
+        <h2>Analizar por URL</h2>
+        <p>Introduce la URL de la imagen para predecir phishing.</p>
     </div>
 
-    <!-- ===== ANALISIS POR IMAGEN ===== -->
-    <div class="analysis-box">
-        <div class="analysis-header">
-            <h2>Analizar por Imagen</h2>
-            <p>Sube la imagen para predecir phishing.</p>
-        </div>
-        <form method="POST" action="/analizar_img" enctype="multipart/form-data">
-            <input type="file" name="img_file" accept="image/*">
-            <br>
-            <input type="submit" value="Analizar">
-        </form>
+    <form method="POST" action="/predictions">
+        <input type="text" name="img_url" placeholder="https://ejemplo.com/imagen.png">
+        <br>
+        <input type="submit" value="Analizar">
+    </form>
 
-        {% if resultado_img %}
-            {% if resultado_img.error %}
-                <div class="result nophishing">{{ resultado_img.error }}</div>
-            {% else %}
-                <div class="result {% if resultado_img.es_phishing %}phishing{% else %}nophishing{% endif %}">
-                    <div><span class="key">Es mensaje:</span><span class="value">{{ resultado_img.es_mensaje }}</span></div>
-                    {% if resultado_img.es_mensaje %}
-                        <div><span class="key">Es phishing:</span><span class="value">{{ resultado_img.es_phishing }}</span></div>
-                        <div><span class="key">Probabilidad:</span><span class="value">{{ resultado_img.probabilidad_phishing }}%</span></div>
+    {% if resultado_url %}
+        {% if resultado_url.error %}
+            <div class="result nophishing">{{ resultado_url.error }}</div>
+        {% else %}
+            <div class="result {% if resultado_url.es_phishing %}phishing{% else %}nophishing{% endif %}">
+                <div><span class="key">Es mensaje:</span><span class="value">{{ resultado_url.es_mensaje }}</span></div>
+
+                {% if resultado_url.es_mensaje %}
+                    <div><span class="key">Es phishing:</span><span class="value">{{ resultado_url.es_phishing }}</span></div>
+                    <div><span class="key">Probabilidad:</span><span class="value">{{ resultado_url.probabilidad_phishing }}%</span></div>
+
+                    {% if resultado_url.explicacion %}
+                    <div class="explanation-box">
+                        <h4><i class="fas fa-info-circle"></i> Explicación del análisis</h4>
+                        <p>{{ resultado_url.explicacion }}</p>
+                    </div>
                     {% endif %}
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         {% endif %}
+    {% endif %}
+</div>
+
+<!-- ===== ANALISIS POR IMAGEN ===== -->
+<div class="analysis-box">
+    <div class="analysis-header">
+        <h2>Analizar por Imagen</h2>
+        <p>Sube la imagen para predecir phishing.</p>
     </div>
+
+    <form method="POST" action="/predictions" enctype="multipart/form-data">
+        <input type="file" name="img_file" accept="image/*">
+        <br>
+        <input type="submit" value="Analizar">
+    </form>
+
+    {% if resultado_img %}
+        {% if resultado_img.error %}
+            <div class="result nophishing">{{ resultado_img.error }}</div>
+        {% else %}
+            <div class="result {% if resultado_img.es_phishing %}phishing{% else %}nophishing{% endif %}">
+                <div><span class="key">Es mensaje:</span><span class="value">{{ resultado_img.es_mensaje }}</span></div>
+
+                {% if resultado_img.es_mensaje %}
+                    <div><span class="key">Es phishing:</span><span class="value">{{ resultado_img.es_phishing }}</span></div>
+                    <div><span class="key">Probabilidad:</span><span class="value">{{ resultado_img.probabilidad_phishing }}%</span></div>
+
+                    {% if resultado_img.explicacion %}
+                    <div class="explanation-box">
+                        <h4><i class="fas fa-info-circle"></i> Explicación del análisis</h4>
+                        <p>{{ resultado_img.explicacion }}</p>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
 
 </div>
 
@@ -284,7 +326,3 @@ window.addEventListener("resize", () => {
 
 </body>
 </html>
-
-
-
-

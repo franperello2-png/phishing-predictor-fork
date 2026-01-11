@@ -28,57 +28,59 @@ co = cohere.ClientV2(api_key=cohere_api_key)
 app = Flask(__name__)
 
 
-def sacar_texto_img(img_url): #características devueltas del modelo predictivo
+def analisis_img(img_url):
     """
     Cohere analiza la imagen ofrecida del usuario y devuelve un JSON con la predicción,
     si la imagen introducida del usuario es válida o no y un porcentaje de riesgo de phishing
     """
-
     prompt = """
-    Eres un sistema de detección de phishing a partir de imágenes de mensajes. Tu tarea es:
-    1. Determinar si la imagen proporcionada contiene un mensaje legible (correo electrónico, SMS, notificación o chat). 
+    Eres un sistema de detección de phishing a partir de imágenes de mensajes.
+
+    Tu tarea es:
+    1. Determinar si la imagen proporcionada contiene un mensaje legible (correo electrónico, SMS, notificación o chat).
     2. Si la imagen es un mensaje:
-        a. Determinar si es un intento de phishing o no.
-        b. Devolver un porcentaje que indique la probabilidad de que sea phishing. Si crees que NO es phishing, devuelve un porcentaje bajo, menor al 15%.
-    3. Si la imagen NO es un mensaje, no intentes calcular phishing, solo indica que no es un mensaje.
+    a. Determinar si es un intento de phishing o no.
+    b. Devolver un porcentaje que indique la probabilidad de que sea phishing.
+    3. Si la imagen NO es un mensaje, indícalo claramente.
 
-    El resultado debe devolverse **exclusivamente en formato JSON**, con estas claves exactas:
+    Devuelve SIEMPRE un JSON válido con las siguientes claves EXACTAS:
 
-    - `es_mensaje` → booleano, True si es un mensaje, False si no.
-    - `es_phishing` → booleano, True si es phishing, False si no. Solo si `es_mensaje` es True.
-    - `probabilidad_phishing` → número entre 0 y 100, solo si `es_mensaje` es True. Nunca devuelvas null o None.
+    - "es_mensaje": boolean
+    - "es_phishing": boolean o false si no aplica
+    - "probabilidad_phishing": número entre 0 y 100 o 0 si no aplica
+    - "explicacion": string con una explicación clara y comprensible
 
-    Ejemplos de formato de salida esperado:
+    Ejemplos:
 
-    1. Imagen NO es un mensaje:
+    Imagen NO es un mensaje:
     {
-    "es_mensaje": false
-    "es_phishing": None,
-    "probabilidad_phishing": None
+    "es_mensaje": false,
+    "es_phishing": false,
+    "probabilidad_phishing": 0,
+    "explicacion": "La imagen no contiene un mensaje legible, por lo que no se puede evaluar phishing."
     }
 
-    2. Imagen es un mensaje y NO es phishing:
+    Imagen es mensaje y NO es phishing:
     {
     "es_mensaje": true,
     "es_phishing": false,
-    "probabilidad_phishing": 7
+    "probabilidad_phishing": 8,
+    "explicacion": "El mensaje no presenta señales típicas de phishing como urgencia o solicitudes de datos sensibles."
     }
 
-    3. Imagen es un mensaje y SÍ es phishing:
+    Imagen es mensaje y SÍ es phishing:
     {
     "es_mensaje": true,
     "es_phishing": true,
-    "probabilidad_phishing": 92
+    "probabilidad_phishing": 91,
+    "explicacion": "El mensaje utiliza lenguaje urgente y suplanta a una entidad legítima solicitando una acción inmediata."
     }
 
-    **Instrucciones adicionales**:
-    - Siempre devuelve JSON válido.
-    - Nunca uses null, None, ni claves vacías si "es_mensaje" = true.
-    - El porcentaje debe ser coherente con tu estimación: alto si es phishing, bajo si no.
-    - No agregues comentarios, explicaciones ni texto adicional fuera del JSON.
-    - Devuele un mensaje explicando el cómo has llegado a ala conclusión de que la imagen introducida era phishing o no. 
-
-"""
+    Instrucciones:
+    - Devuelve SOLO JSON válido.
+    - No añadas texto fuera del JSON.
+    - No inventes datos.
+    """
     try:
         response = co.chat(
             model="command-a-vision-07-2025",
@@ -245,7 +247,7 @@ def predictions():
     # Verificar si envían URL
     img_url = request.form.get("img_url")
     if img_url:
-        res = sacar_texto_img(img_url)
+        res = analisis_img(img_url)
         if res is None:
             resultado_url = {"error": "Error al procesar la imagen, pruebe con otra."}
         else:
@@ -257,7 +259,7 @@ def predictions():
         # Guardar temporalmente para obtener URL accesible, o pasar bytes a Cohere
         # Para simplificar asumimos que subes a un endpoint público o lo pasas como URL de prueba
         # Aquí solo usamos una URL de ejemplo
-        res = sacar_texto_img("https://ejemplo.com/imagen_subida.png")
+        res = analisis_img("https://ejemplo.com/imagen_subida.png")
         if res is None:
             resultado_img = {"error": "Error al procesar la imagen subida."}
         else:

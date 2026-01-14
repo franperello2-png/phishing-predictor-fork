@@ -1,102 +1,339 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Estadísticas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Roboto', sans-serif; background: #f6f7fb; margin: 0; }
-    .topbar { background: #1e3c72; color: white; padding: 16px 20px; display:flex; justify-content:space-between; align-items:center; }
-    .topbar a { color: white; text-decoration: none; font-weight: 700; }
-    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-    .card { background: white; border-radius: 14px; padding: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.08); }
-    .card h2 { margin: 0 0 10px; color: #1e3c72; font-size: 1.2rem; }
-    .kpis { display:flex; gap: 10px; flex-wrap:wrap; margin-bottom: 10px; }
-    .kpi { background:#eef3ff; border-radius: 10px; padding: 10px 12px; }
-    img { width: 100%; border-radius: 10px; }
-    .muted { color:#666; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishingPredictor - Estadísticas</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+canvas#bgCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+/* HEADER */
+header {
+    padding: 1rem 3rem;
+    background-color: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.header-left i {
+    color: #1e90ff;
+    font-size: 1.3rem;
+}
+
+.header-left h1 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1e3c72;
+}
+
+.header-actions button {
+    background-color: #1e90ff;
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.95rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-actions button:hover {
+    transform: scale(1.06);
+    background-color: #00bfff;
+}
+
+/* HERO */
+.hero {
+    text-align: center;
+    padding: 3.5rem 2rem 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.hero h2 {
+    font-size: 2.4rem;
+    margin-bottom: 0.75rem;
+    color: #1e3c72;
+}
+
+.hero p {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+/* GRID */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding: 2rem 3rem;
+    max-width: 1200px;
+    margin: auto;
+    position: relative;
+    z-index: 2;
+}
+
+.card {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.card-title i {
+    font-size: 1.6rem;
+    color: #1e90ff;
+}
+
+.card h3 {
+    margin: 0;
+    color: #1e3c72;
+    font-size: 1.15rem;
+}
+
+.card p {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+.kpis {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.kpi {
+    background:#eef3ff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+}
+
+.chartbox {
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 10px;
+}
+
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background-color: rgba(255,255,255,0.9);
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 2;
+    margin-top: 2rem;
+}
+
+footer a {
+    color: #1e90ff;
+    text-decoration: none;
+    margin: 0 0.5rem;
+}
+
+@media (max-width: 900px) {
+    .cards-container { grid-template-columns: 1fr; }
+    header { padding: 1rem 1.25rem; }
+    .cards-container { padding: 1.5rem 1.25rem; }
+}
+</style>
 </head>
+
 <body>
-  <div class="topbar">
-    <div><strong>Panel estadístico</strong></div>
-    <div><a href="/">Volver</a></div>
+
+<canvas id="bgCanvas"></canvas>
+
+<header>
+  <div class="header-left">
+    <i class="fas fa-chart-line"></i>
+    <h1>Estadístico</h1>
   </div>
+  <div class="header-actions">
+    <button onclick="location.href='/'">Inicio</button>
+  </div>
+</header>
 
-  <div class="container">
-    <div class="grid">
+<section class="hero">
+  <h2>Panel Estadístico</h2>
+  <p>Visualización interactiva de datos reales del sistema.</p>
+</section>
 
-      <!-- Dataset del minijuego -->
-      <div class="card">
-        <h2>Dataset del minijuego</h2>
-        <div class="kpis">
-          <div class="kpi">Total imágenes: <strong>{{ n_images }}</strong></div>
-          <div class="kpi">Phishing: <strong>{{ n_phish }}</strong></div>
-          <div class="kpi">Legítimas: <strong>{{ n_legit }}</strong></div>
-        </div>
-        <img src="data:image/png;base64,{{ chart_dataset }}" alt="Distribución dataset"/>
-      </div>
+<section class="cards-container">
 
-      <!-- Rendimiento del minijuego -->
-      <div class="card">
-        <h2>Rendimiento del minijuego</h2>
-        {% if minigame_summary %}
-          <div class="kpis">
-            <div class="kpi">Intentos: <strong>{{ minigame_summary.total_attempts }}</strong></div>
-            <div class="kpi">Acierto: <strong>{{ minigame_summary.accuracy_pct }}%</strong></div>
-          </div>
-          <img src="data:image/png;base64,{{ chart_minigame }}" alt="Precisión minijuego"/>
-        {% else %}
-          <p class="muted">
-            Aún no hay intentos registrados. Juega al minijuego para generar estadísticas.
-          </p>
-        {% endif %}
-      </div>
-
-      <!-- Cohere: resultados -->
-      <div class="card">
-        <h2>Cohere: resultados</h2>
-        {% if cohere_summary %}
-          <div class="kpis">
-            <div class="kpi">Predicciones: <strong>{{ cohere_summary.total_preds }}</strong></div>
-            <div class="kpi">Mensajes: <strong>{{ cohere_summary.mensajes }}</strong></div>
-            <div class="kpi">No mensajes: <strong>{{ cohere_summary.no_mensajes }}</strong></div>
-            <div class="kpi">Phishing (solo mensajes): <strong>{{ cohere_summary.phishing_en_mensajes }}</strong></div>
-            <div class="kpi">Legítimo (solo mensajes): <strong>{{ cohere_summary.legit_en_mensajes }}</strong></div>
-          </div>
-          <img src="data:image/png;base64,{{ chart_cohere }}" alt="Cohere: mensaje vs no mensaje"/>
-        {% else %}
-          <p class="muted">
-            Aún no hay predicciones guardadas. Usa el análisis con Cohere para generar datos.
-          </p>
-        {% endif %}
-      </div>
-
-      <!-- ⭐ Gráfica potente: probabilidad de phishing -->
-      <div class="card">
-        <h2>Probabilidad de phishing (Cohere)</h2>
-
-        {% if chart_prob %}
-          <p class="muted">
-            Distribución de la probabilidad de phishing estimada por Cohere
-            para imágenes que contienen mensajes.
-          </p>
-
-          <img
-            src="data:image/png;base64,{{ chart_prob }}"
-            alt="Distribución probabilidad phishing"
-          >
-        {% else %}
-          <p class="muted">
-            No hay suficientes datos para mostrar esta gráfica.
-            Analiza más imágenes para generar estadísticas.
-          </p>
-        {% endif %}
-      </div>
-
+  <div class="card">
+    <div class="card-title">
+      <i class="fas fa-database"></i>
+      <h3>Dataset del minijuego</h3>
     </div>
+    <div class="kpis" id="kpis-dataset"></div>
+    <div class="chartbox"><canvas id="chartDataset"></canvas></div>
   </div>
+
+  <div class="card">
+    <div class="card-title">
+      <i class="fas fa-gamepad"></i>
+      <h3>Rendimiento del minijuego</h3>
+    </div>
+    <div class="kpis" id="kpis-minigame"></div>
+    <div class="chartbox"><canvas id="chartAccuracy"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <i class="fas fa-robot"></i>
+      <h3>Cohere: mensajes</h3>
+    </div>
+    <div class="kpis" id="kpis-cohere"></div>
+    <div class="chartbox"><canvas id="chartCohereMsg"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <i class="fas fa-chart-bar"></i>
+      <h3>Probabilidad de phishing</h3>
+    </div>
+    <div class="chartbox"><canvas id="chartProb"></canvas></div>
+  </div>
+
+</section>
+
+<footer>
+  <p>&copy; 2025 PhishingPredictor</p>
+</footer>
+
+<script>
+// ---------------- PARTICULAS ----------------
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const particles = [];
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 5 + 2,
+    vx: (Math.random() - .5),
+    vy: (Math.random() - .5)
+  });
+}
+
+function animateBG() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x<0||p.x>canvas.width) p.vx*=-1;
+    if (p.y<0||p.y>canvas.height) p.vy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle="rgba(30,144,255,.3)";
+    ctx.fill();
+  });
+  requestAnimationFrame(animateBG);
+}
+animateBG();
+
+// ---------------- STATS ----------------
+fetch("/stats/data")
+.then(r => r.json())
+.then(d => {
+
+  document.getElementById("kpis-dataset").innerHTML = `
+    <div class="kpi">Total: <strong>${d.dataset.n_images}</strong></div>
+    <div class="kpi">Phishing: <strong>${d.dataset.n_phish}</strong></div>
+    <div class="kpi">Legítimo: <strong>${d.dataset.n_legit}</strong></div>
+  `;
+
+  new Chart(chartDataset, {
+    type: "bar",
+    data: {
+      labels: ["Phishing","Legítimo"],
+      datasets: [{ data: [d.dataset.n_phish, d.dataset.n_legit] }]
+    }
+  });
+
+  if (d.minigame_summary) {
+    document.getElementById("kpis-minigame").innerHTML = `
+      <div class="kpi">Intentos: ${d.minigame_summary.total_attempts}</div>
+      <div class="kpi">Acierto: ${d.minigame_summary.accuracy_pct}%</div>
+    `;
+    new Chart(chartAccuracy, {
+      type: "line",
+      data: {
+        labels: d.daily_accuracy.labels,
+        datasets: [{ data: d.daily_accuracy.values, tension:.3 }]
+      },
+      options: { scales: { y: { min:0, max:100 } } }
+    });
+  }
+
+  if (d.cohere_summary) {
+    document.getElementById("kpis-cohere").innerHTML = `
+      <div class="kpi">Mensajes: ${d.cohere_summary.mensajes}</div>
+      <div class="kpi">No mensajes: ${d.cohere_summary.no_mensajes}</div>
+    `;
+    new Chart(chartCohereMsg, {
+      type: "bar",
+      data: {
+        labels: d.cohere_msg_counts.labels,
+        datasets: [{ data: d.cohere_msg_counts.values }]
+      }
+    });
+
+    new Chart(chartProb, {
+      type: "bar",
+      data: {
+        labels: d.cohere_prob_hist.labels,
+        datasets: [{ data: d.cohere_prob_hist.counts }]
+      }
+    });
+  }
+});
+</script>
+
 </body>
 </html>
+

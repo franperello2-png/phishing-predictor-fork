@@ -398,93 +398,86 @@ def history():
     """
     Página que enseña los datos historicos (todos lo que tenemos en la bd)
     """
-    col_predictions = db["predictions_history"]
-    col_mapa = db["mapa_phishing"]
-    col_reports = db["report_reliable_links"]
 
-    # --- Historial de predicciones ---
     predictions = list(
-        col_predictions
-        .find({}, {"_id": 0})
-        .sort("fecha", -1)
-        .limit(100)
+        db["predictions_history"].find().sort("fecha", -1)
     )
 
-    # --- Casos reales del mapa ---
+    antivirus = list(
+        db["best antivirus"].find({}, {"_id": 0})
+    )
+
     mapa = list(
-        col_mapa
-        .find({}, {"_id": 0})
-        .limit(50)
+        db["mapa_phishing"].find({}, {"_id": 0})
     )
 
-    # --- Recursos fiables (DESNORMALIZADOS) ---
-    reports_raw = col_reports.find_one({}, {"_id": 0})
+    minigame = list(
+        db["minigame"].find({}, {"_id": 0})
+    )
 
-    reports = []
-    if reports_raw:
-        for tipo, paises in reports_raw.items():
-            for pais, urls in paises.items():
-                for url in urls:
-                    reports.append({
-                        "tipo": tipo,
-                        "pais": pais,
-                        "url": url
-                    })
+    collection = db["predictions_history"]
+    datos = list(collection.find().sort("fecha", -1))
 
     return render_template(
         "history.html",
-        predictions=predictions,
-        mapa=mapa,
-        reports=reports
+        predictions_history=predictions,
+        best_antivirus=antivirus,
+        mapo_phishing=mapa,
+        minigame=minigame
     )
 
-
-@app.route('/stats', methods=['GET'])
+@app.route("/stats", methods=["GET"])
 def stats():
-    # 1) Dataset del minijuego: phishing vs legítimo
+    return render_template("stats.html")
+
+@app.route("/stats/data", methods=["GET"])
+def stats_data():
+    # ---------- 1) Dataset del minijuego ----------
     images = list(db["minigame"].find({}, {"_id": 0, "is_phishing": 1}))
     n_images = len(images)
     n_phish = sum(1 for x in images if x.get("is_phishing") is True)
     n_legit = n_images - n_phish
 
-    fig1 = plt.figure()
-    plt.bar(["Phishing", "Legítimo"], [n_phish, n_legit])
-    plt.title("Distribución de imágenes (minijuego)")
-    chart_dataset = fig_to_base64(fig1)
+    dataset = {
+        "n_images": n_images,
+        "n_phish": n_phish,
+        "n_legit": n_legit
+    }
 
-    # 2) Intentos del minijuego (si existen)
+    # ---------- 2) Intentos del minijuego (accuracy por día) ----------
     attempts = list(db["minigame_attempts"].find({}, {"_id": 0, "ts": 1, "success": 1}))
     minigame_summary = None
-    chart_minigame = None
+    daily_accuracy = {"labels": [], "values": []}
 
     if attempts:
         dfA = pd.DataFrame(attempts)
         dfA["ts"] = pd.to_datetime(dfA["ts"], errors="coerce")
+        dfA = dfA.dropna(subset=["ts"])
         dfA["date"] = dfA["ts"].dt.date
         dfA["success"] = dfA["success"].astype(bool)
 
-        total_attempts = int(len(dfA))
-        accuracy_pct = float(dfA["success"].mean() * 100)
-
-        by_day = dfA.groupby("date")["success"].mean().reset_index()
-
-        fig2 = plt.figure()
-        plt.plot(by_day["date"].astype(str), by_day["success"] * 100, marker="o")
-        plt.xticks(rotation=45, ha="right")
-        plt.ylim(0, 100)
-        plt.title("Precisión del minijuego por día (%)")
-        plt.ylabel("% acierto")
-        chart_minigame = fig_to_base64(fig2)
-
         minigame_summary = {
-            "total_attempts": total_attempts,
-            "accuracy_pct": round(accuracy_pct, 1)
+            "total_attempts": int(len(dfA)),
+            "accuracy_pct": round(float(dfA["success"].mean() * 100), 1)
         }
 
-    # 3) Predicciones Cohere (si existen)
+        by_day = dfA.groupby("date")["success"].mean().reset_index()
+        daily_accuracy["labels"] = [str(d) for d in by_day["date"].tolist()]
+        daily_accuracy["values"] = [round(float(v * 100), 1) for v in by_day["success"].tolist()]
+
+    # ---------- 3) Predicciones Cohere ----------
     preds = list(db["cohere_predictions"].find({}, {"_id": 0, "result": 1}))
     cohere_summary = None
-    chart_cohere = None
+
+    cohere_msg_counts = {
+        "labels": ["No es mensaje", "Es mensaje"],
+        "values": [0, 0]
+    }
+
+    cohere_prob_hist = {
+        "labels": [f"{i*10}-{i*10+9}" for i in range(10)],
+        "counts": [0] * 10
+    }
 
     if preds:
         rows = []
@@ -498,20 +491,19 @@ def stats():
 
         dfP = pd.DataFrame(rows)
         dfP["es_mensaje"] = dfP["es_mensaje"].astype("boolean")
-        dfP["probabilidad_phishing"] = pd.to_numeric(dfP["probabilidad_phishing"], errors="coerce")
+        dfP["probabilidad_phishing"] = pd.to_numeric(
+            dfP["probabilidad_phishing"], errors="coerce"
+        )
 
         total_preds = int(len(dfP))
         mensajes = int(dfP["es_mensaje"].fillna(False).sum())
         no_mensajes = total_preds - mensajes
 
+        cohere_msg_counts["values"] = [no_mensajes, mensajes]
+
         df_msg = dfP[dfP["es_mensaje"] == True].copy()
         phishing = int((df_msg["es_phishing"] == True).sum())
         legit = int((df_msg["es_phishing"] == False).sum())
-
-        fig3 = plt.figure()
-        plt.bar(["No es mensaje", "Es mensaje"], [no_mensajes, mensajes])
-        plt.title("Cohere: ¿la imagen era un mensaje?")
-        chart_cohere = fig_to_base64(fig3)
 
         cohere_summary = {
             "total_preds": total_preds,
@@ -521,13 +513,24 @@ def stats():
             "legit_en_mensajes": legit
         }
 
-    return render_template(
-        "stats.html",
-        n_images=n_images, n_phish=n_phish, n_legit=n_legit,
-        chart_dataset=chart_dataset,
-        minigame_summary=minigame_summary, chart_minigame=chart_minigame,
-        cohere_summary=cohere_summary, chart_cohere=chart_cohere
-    )
+        # Histograma de probabilidad (bins de 10%)
+        probs = pd.to_numeric(
+            df_msg["probabilidad_phishing"], errors="coerce"
+        ).dropna()
+        probs = probs.clip(lower=0, upper=100)
+
+        for v in probs.tolist():
+            idx = min(int(v // 10), 9)
+            cohere_prob_hist["counts"][idx] += 1
+
+    return {
+        "dataset": dataset,
+        "minigame_summary": minigame_summary,
+        "daily_accuracy": daily_accuracy,
+        "cohere_summary": cohere_summary,
+        "cohere_msg_counts": cohere_msg_counts,
+        "cohere_prob_hist": cohere_prob_hist
+    }
 
 
 @app.route('/report', methods=['GET', 'POST'])

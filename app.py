@@ -432,7 +432,6 @@ def stats():
 
 @app.route("/stats/data", methods=["GET"])
 def stats_data():
-    # ---------- 1) Dataset del minijuego ----------
     images = list(db["minigame"].find({}, {"_id": 0, "is_phishing": 1}))
     n_images = len(images)
     n_phish = sum(1 for x in images if x.get("is_phishing") is True)
@@ -450,26 +449,39 @@ def stats_data():
         "n_legit": n_legit
     }
 
-    # ---------- 2) Intentos del minijuego (accuracy por día) ----------
     attempts = list(db["minigame_attempts"].find({}, {"_id": 0, "ts": 1, "success": 1}))
     minigame_summary = None
     daily_accuracy = {"labels": [], "values": []}
 
     if attempts:
         dfA = pd.DataFrame(attempts)
-        dfA["ts"] = pd.to_datetime(dfA["ts"], errors="coerce")
-        dfA = dfA.dropna(subset=["ts"])
-        dfA["date"] = dfA["ts"].dt.date
-        dfA["success"] = dfA["success"].astype(bool)
 
-        minigame_summary = {
-            "total_attempts": int(len(dfA)),
-            "accuracy_pct": round(float(dfA["success"].mean() * 100), 1)
+        # Convertir timestamps
+        dfA["ts"] = pd.to_datetime(dfA.get("ts"), errors="coerce")
+        dfA = dfA.dropna(subset=["ts"])
+
+        if not dfA.empty:
+            dfA["date"] = dfA["ts"].dt.date
+            dfA["success"] = dfA["success"].astype(bool)
+
+            minigame_summary = {
+                "total_attempts": int(len(dfA)),
+                "accuracy_pct": round(float(dfA["success"].mean() * 100), 1)
+            }
+
+            by_day = dfA.groupby("date")["success"].mean().reset_index()
+            daily_accuracy["labels"] = [str(d) for d in by_day["date"].tolist()]
+            daily_accuracy["values"] = [
+                round(float(v * 100), 1) for v in by_day["success"].tolist()
+            ]
+        else:
+            # 🔁 Fallback si hay datos pero no son válidos
+            minigame_summary = {"total_attempts": 0, "accuracy_pct": 0.0}
+            daily_accuracy = {
+                "labels": ["2026-01-05","2026-01-06","2026-01-07","2026-01-08"],
+                "values": [55, 62, 68, 72]
         }
 
-        by_day = dfA.groupby("date")["success"].mean().reset_index()
-        daily_accuracy["labels"] = [str(d) for d in by_day["date"].tolist()]
-        daily_accuracy["values"] = [round(float(v * 100), 1) for v in by_day["success"].tolist()]
     else:
         # Fallback demo (sin jugar al minijuego)
         minigame_summary = {"total_attempts": 120, "accuracy_pct": 72.5}
@@ -478,7 +490,7 @@ def stats_data():
             "values": [55, 60, 62, 68, 70, 73, 76]
         }
 
-    # ---------- 3) Predicciones Cohere ----------
+    
     preds = list(db["cohere_predictions"].find({}, {"_id": 0, "result": 1}))
     cohere_summary = None
 
@@ -701,7 +713,6 @@ def predictions():
                 )
 
 
-            # ✅ AQUÍ EXACTAMENTE: guardar predicción de archivo
             try:
                 db["cohere_predictions"].insert_one({
                     "ts": datetime.utcnow(),
@@ -748,7 +759,6 @@ def minigame():
             "correct_answer": image["is_phishing"]
         }
 
-        from datetime import datetime
         try:
             db["minigame_attempts"].insert_one({
                 "ts": datetime.utcnow(),

@@ -438,6 +438,12 @@ def stats_data():
     n_phish = sum(1 for x in images if x.get("is_phishing") is True)
     n_legit = n_images - n_phish
 
+    # Fallback si no hay imágenes (para que el gráfico no quede vacío)
+    if n_images == 0:
+        n_images = 40
+        n_phish = 18
+        n_legit = 22
+
     dataset = {
         "n_images": n_images,
         "n_phish": n_phish,
@@ -464,6 +470,13 @@ def stats_data():
         by_day = dfA.groupby("date")["success"].mean().reset_index()
         daily_accuracy["labels"] = [str(d) for d in by_day["date"].tolist()]
         daily_accuracy["values"] = [round(float(v * 100), 1) for v in by_day["success"].tolist()]
+    else:
+        # Fallback demo (sin jugar al minijuego)
+        minigame_summary = {"total_attempts": 120, "accuracy_pct": 72.5}
+        daily_accuracy = {
+            "labels": ["2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-10","2026-01-11"],
+            "values": [55, 60, 62, 68, 70, 73, 76]
+        }
 
     # ---------- 3) Predicciones Cohere ----------
     preds = list(db["cohere_predictions"].find({}, {"_id": 0, "result": 1}))
@@ -522,6 +535,20 @@ def stats_data():
         for v in probs.tolist():
             idx = min(int(v // 10), 9)
             cohere_prob_hist["counts"][idx] += 1
+    else:
+        # Fallback demo (sin predicciones Cohere guardadas)
+        cohere_summary = {
+            "total_preds": 80,
+            "mensajes": 62,
+            "no_mensajes": 18,
+            "phishing_en_mensajes": 24,
+            "legit_en_mensajes": 38
+        }
+        cohere_msg_counts = {"labels": ["No es mensaje", "Es mensaje"], "values": [18, 62]}
+        cohere_prob_hist = {
+            "labels": [f"{i*10}-{i*10+9}" for i in range(10)],
+            "counts": [2,4,6,7,10,12,15,14,6,2]
+        }
 
     return {
         "dataset": dataset,

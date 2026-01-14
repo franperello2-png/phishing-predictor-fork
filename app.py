@@ -441,23 +441,18 @@ def mapa():
     """
     return render_template("mapa_phishing.html")
    
-# @app.route("/serve_image/<file_id>")
-# def serve_image(file_id):
-#     fs = GridFS(db)
-#     file = fs.get(ObjectId(file_id))
-#     return send_file(io.BytesIO(file.read()), mimetype=file.contentType)
 
 @app.route('/predictions', methods=['GET', 'POST'])
 def predictions():
     """
-    Da las opciones de predecir por imagen (o URL de la imagen), texto o URL de página web dudosa
+    Da las opciones de predecir por URL de la imagen, texto o URL de página web dudosa
 
     Maneja 3 casos:
     1. img_url / img_file (función analisis_img) 
     2. text_input (función analisis_texto_onnx) 
     3. url_input (función analisis_url_hibrido) 
 
-    A partir de una imagen o URL a la imagen, Cohere detecta si es un mensaje. En caso de que lo sea
+    A partir de una URL a la imagen, Cohere detecta si es un mensaje. En caso de que lo sea
     identifica si se trata de phishing o no y su porcentaje de phishing, por lo contrario envía un mensaje
     al usuario explicando que la imagen no es válida para la predicción
     """

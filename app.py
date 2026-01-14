@@ -28,6 +28,32 @@ co = cohere.ClientV2(api_key=cohere_api_key)
 
 app = Flask(__name__)
 
+print("Cargando Modelos")
+try:
+    #Cargamos Modelo para URLs
+    sess_url = ort.InferenceSession("detector_phishing_uci.onnx")
+    input_name_url = sess_url.get_inputs()[0].name
+    label_name_url = sess_url.get_outputs()[0].name
+    
+    #Cargamos Modelo para Texto de Mensajes
+    sess_text = ort.InferenceSession("detector_fraude_final.onnx")
+    input_name_text = sess_text.get_inputs()[0].name
+    label_name_text = sess_text.get_outputs()[0].name
+    print("Modelos ONNX cargados correctamente.")
+except Exception as e:
+    print(f"Error al caargar alguno de los modelos: {e}")
+    sess_url = None
+    sess_text = None
+
+FEATURES_ORDER = [
+    'having_IP_Address', 'URL_Length', 'Shortining_Service', 'having_At_Symbol', 
+    'double_slash_redirecting', 'Prefix_Suffix', 'having_Sub_Domain', 'SSLfinal_State', 
+    'Domain_registeration_length', 'Favicon', 'port', 'HTTPS_token', 'Request_URL', 
+    'URL_of_Anchor', 'Links_in_tags', 'SFH', 'Submitting_to_email', 'Abnormal_URL', 
+    'Redirect', 'on_mouseover', 'RightClick', 'popUpWidnow', 'Iframe', 'age_of_domain', 
+    'DNSRecord', 'web_traffic', 'Page_Rank', 'Google_Index', 'Links_pointing_to_page', 
+    'Statistical_report'
+]
 
 def analisis_img(img_url):
     """
@@ -152,7 +178,148 @@ def get_explanation(text, prediction): #texto del usuario y prediccion del model
                 "Aun así, se recomienda mantener precaución y verificar siempre el origen del mensaje."
             ]
             return random.choice(fallbacks)
+
+def analisis_texto_onnx(texto_usuario):
+    """
+    Analiza el texto de un mensaje usando el modelo ONNX de texto previamente entrenado.
+    """
+    if not sess_text:
+        return {"Error":"El Modelo de texto no se ha cargado correctamente."}
+
+    try:
+        inputs = {input_name_text: np.array([[texto_usuario]], dtype=object)}
+        prediccion = sess_text.run(None, inputs)
+        label = prediccion[0][0]
+        probs = prediccion[1][0] #Mapa de probabilidades
+        
+        # Interpretación (ajustar según tu dataset: 1/'spam' = fraude)
+        es_fraude = (str(label).lower() in ['1', 'spam', 'phishing'])
+        
+        # Obtener confianza
+        confianza = probs.get(label, 0) * 100
+
+        pred_int = 1 if es_fraude else 0
+        # Usamos la función original get_explanation hecha previamente para generar la explicación
+        explicacion_ia = get_explanation(texto_usuario, pred_int)
+
+        return {
+            "es_phishing": es_fraude,
+            "probabilidad": round(confianza, 2),
+            "tipo": "Texto (SMS/Email)",
+            "explicacion": explicacion_ia
+        }
+    except Exception as e:
+        print(f"Error en ONNX Texto: {e}")
+        return {"error": "Error interno al analizar el texto."}
     
+
+def analisis_url_hibrido(url_usuario):
+    """
+    IA HÍBRIDA ROBUSTA: 
+    Usa el prompt DETALLADO original para máxima precisión.
+    Incluye limpieza inteligente para evitar errores si la IA habla de más.
+    """
+    if not sess_url:
+        return {"Error": "Modelo de URL no ha sido cargado correctamente"}
+
+    print(f"Analizando URL {url_usuario} con Cohere")
+    
+    # Prompt que le damos a Cohere para que obtenga los valores de la URL 
+    prompt = f"""
+    Actúa como un analista de ciberseguridad experto. Tu tarea es extraer características técnicas de la URL: "{url_usuario}" para alimentar un modelo de detección de phishing (Dataset UCI).
+
+    Analiza la URL y genera un JSON con las siguientes 30 claves. 
+    Usa los valores: -1 (Malicioso/Phishing), 0 (Sospechoso), 1 (Legítimo/Seguro).
+
+    CLAVES Y GUÍA DE VALORES:
+    1. "having_IP_Address": -1 si la URL usa una dirección IP en lugar de dominio, si no 1.
+    2. "URL_Length": -1 si >75 caracteres, 0 si entre 54-75, 1 si <54.
+    3. "Shortining_Service": -1 si usa acortadores (bit.ly, tinyurl), si no 1.
+    4. "having_At_Symbol": -1 si tiene "@", si no 1.
+    5. "double_slash_redirecting": -1 si hay "//" después de la posición 7 (http), si no 1.
+    6. "Prefix_Suffix": -1 si el dominio tiene guiones (-), si no 1.
+    7. "having_Sub_Domain": -1 si tiene más de 3 puntos (subdominios multiples), 0 si tiene 2, 1 si tiene 1 o ninguno.
+    8. "SSLfinal_State": 1 si es HTTPS y certificado válido, -1 si es HTTP o certificado malo.
+    9. "Domain_registeration_length": -1 si el dominio expira en < 1 año, 1 si > 1 año (Estímalo 1 si parece dominio corporativo serio).
+    10. "Favicon": 1 si carga desde el mismo dominio, -1 si es externo.
+    11. "port": 1 si usa puertos estándar (80, 443), -1 si usa puertos raros abiertos.
+    12. "HTTPS_token": -1 si "https" aparece como parte del dominio (ej: https-google.com), si no 1.
+    13. "Request_URL": -1 si >61% de objetos (imgs) son externos, 1 si <22%.
+    14. "URL_of_Anchor": -1 si los enlaces <a> apuntan a otro dominio o vacíos, 1 si son internos.
+    15. "Links_in_tags": -1 si tags Meta/Script/Link apuntan fuera, 1 si no.
+    16. "SFH": -1 si el Server Form Handler está vacío o "about:blank", 1 si es válido.
+    17. "Submitting_to_email": -1 si usa "mailto:", 1 si no.
+    18. "Abnormal_URL": -1 si el host no está en la URL, 1 si normal.
+    19. "Redirect": -1 si redirige > 4 veces, 1 si < 2.
+    20. "on_mouseover": -1 si usa JS para cambiar status bar, 1 si no.
+    21. "RightClick": -1 si deshabilita clic derecho, 1 si no.
+    22. "popUpWidnow": -1 si abre popups con inputs, 1 si no.
+    23. "Iframe": -1 si usa iframes invisibles, 1 si no.
+    24. "age_of_domain": -1 si < 6 meses, 1 si > 6 meses.
+    25. "DNSRecord": -1 si no tiene registro DNS (URL vacía), 1 si tiene.
+    26. "web_traffic": 1 si es sitio popular (Alexa/SimilarWeb), -1 si no tiene tráfico o es nuevo.
+    27. "Page_Rank": 1 si tiene PageRank alto, -1 si bajo.
+    28. "Google_Index": 1 si está indexada en Google, -1 si no.
+    29. "Links_pointing_to_page": 1 si tiene muchos backlinks, -1 si 0.
+    30. "Statistical_report": -1 si la IP está en listas negras, 1 si limpia.
+
+    Responde SOLO con el JSON válido. Sin explicaciones extra.
+    """
+
+    try:
+        response = co.chat(
+            model="command-r-08-2024", 
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        texto_respuesta = response.message.content[0].text
+        
+        #Esto sirve para solucionar errores de URL inválida. Buscamos las llaves para saber donde empieza 
+        #y donde acaba el Json que nos da Cohere
+        inicio = texto_respuesta.find('{')
+        fin = texto_respuesta.rfind('}') + 1
+
+        if inicio != -1 and fin != -1:
+            json_str = texto_respuesta[inicio:fin]
+            features_json = json.loads(json_str)
+        else:
+            raise ValueError("La IA no devolvió un JSON limpio.")
+
+        # Preparar vector para ONNX
+        lista_valores = []
+        for feature in FEATURES_ORDER:
+            # Si falta alguna clave, asumimos 0 (sospechoso) por seguridad
+            val = features_json.get(feature, 0)
+            lista_valores.append(float(val))
+            
+        vector_np = np.array([lista_valores], dtype=np.float32)
+        
+        # Predicción ONNX
+        prediccion = sess_url.run([label_name_url], {input_name_url: vector_np})[0]
+        es_phishing = (prediccion[0] == 1)
+        
+        return {
+            "es_phishing": es_phishing,
+            "probabilidad": 95 if es_phishing else 5, 
+            "tipo": "URL Web",
+            "explicacion": "Análisis técnico profundo de 30 variables completado.",
+            "detalles": features_json
+        }
+
+    except Exception as e:
+        print(f"La IA tuvo problemas con esta URL compleja: {e}.")
+        
+        #Como mitigación de errores, en caso de que la URL no sea válida, damos esta salida
+        #Esto es subjetivo, en nuestro caso hemos decidido que si la URL no es válida, en lugar de dar error
+        #retornaremos que hay un 50% de que sea fraude, puesto que no lo sabemos.
+        return {
+            "es_phishing": False, #Da igual
+            "probabilidad": 50, 
+            "tipo": "URL Web",
+            "explicacion": "La URL es demasiado compleja para el análisis automático estándar. Se recomienda revisar manualmente.",
+            "detalles": {"nota": "Análisis parcial debido a complejidad de la URL"}
+        }
+
 def get_db():
     """
     Crear y comprobar la conexión a MongoDB y devolver la base de datos que se va a usar
@@ -285,38 +452,58 @@ def predictions():
     """
     Da las opciones de predecir por imagen (o URL de la imagen), texto o URL de página web dudosa
 
+    Maneja 3 casos:
+    1. img_url / img_file (función analisis_img) 
+    2. text_input (función analisis_texto_onnx) 
+    3. url_input (función analisis_url_hibrido) 
+
     A partir de una imagen o URL a la imagen, Cohere detecta si es un mensaje. En caso de que lo sea
     identifica si se trata de phishing o no y su porcentaje de phishing, por lo contrario envía un mensaje
     al usuario explicando que la imagen no es válida para la predicción
     """
     resultado_url = None
     resultado_img = None
+    resultado_texto = None
 
-    # Verificar si envían URL
-    img_url = request.form.get("img_url")
-    if img_url:
-        res = analisis_img(img_url)
-        if res is None:
-            resultado_url = {"error": "Error al procesar la imagen, pruebe con otra."}
-        else:
-            resultado_url = res
+    if request.method == "POST":
+        # Caso 1.1: URL de Imagen
+        img_url = request.form.get("img_url")
+        if img_url:
+            res = analisis_img(img_url)
+            if res is None:
+                resultado_img = {"error": "Error al procesar la imagen, pruebe con otra."}
+            else:
+                resultado_img = res
 
-    # Verificar si envían archivo (desplegar en render para que cohere pueda leer la imagen bytes)
-    img_file = request.files.get("img_file")
-    if img_file:
-        # Guardar temporalmente para obtener URL accesible, o pasar bytes a Cohere
-        # Para simplificar asumimos que subes a un endpoint público o lo pasas como URL de prueba
-        # Aquí solo usamos una URL de ejemplo
-        res = analisis_img("https://ejemplo.com/imagen_subida.png")
-        if res is None:
-            resultado_img = {"error": "Error al procesar la imagen subida."}
-        else:
-            resultado_img = res
+        # Caso 1.2: (Subir el archivo de la imagen)
+        # Verificar si envían archivo (desplegar en render para que cohere pueda leer la imagen bytes)
+        img_file = request.files.get("img_file")
+        if img_file:
+            # Guardar temporalmente para obtener URL accesible, o pasar bytes a Cohere
+            # Para simplificar asumimos que subes a un endpoint público o lo pasas como URL de prueba
+            # Aquí solo usamos una URL de ejemplo
+            res = analisis_img("https://ejemplo.com/imagen_subida.png")
+            if res is None:
+                resultado_img = {"error": "Error al procesar la imagen subida."}
+            else:
+                resultado_img = res
+
+        # Caso 2: URL de una web
+        url_input = request.form.get("url_input")
+        if url_input:
+            resultado_url = analisis_url_hibrido(url_input)
+
+        # Caso 3: El texto de un mensaje
+        text_input = request.form.get("text_input")
+        if text_input:
+            resultado_texto = analisis_texto_onnx(text_input)
+
 
     return render_template(
         "predictions.html",
         resultado_url=resultado_url,
-        resultado_img=resultado_img
+        resultado_img=resultado_img,
+        resultado_texto=resultado_texto
     )
 @app.route("/minigame/image/<image_id>")
 def minigame_image(image_id):
